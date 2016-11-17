@@ -32,7 +32,9 @@ namespace WebLinq.Samples
         {
             var q =
                 from sp in Http.Get(new Uri("https://google.com/"))
+                               .Dup()
                                .Submit(0, new NameValueCollection { ["q"] = "foobar" })
+                               .Dup()
                                .Html().Content()
                 from sr in
                     Query.Generate(sp, curr =>
@@ -40,7 +42,7 @@ namespace WebLinq.Samples
                         var next = curr.TryBaseHref(curr.QuerySelectorAll("#foot a.fl")
                                                         .Last() // Next
                                                         .GetAttributeValue("href"));
-                        return Http.Get(new Uri(next)).Html().Content();
+                        return Http.Get(new Uri(next)).Dup().Html().Content();
                     })
                     .TakeWhile(h => (TryParse.Int32(HttpUtility.ParseQueryString(h.BaseUrl.Query)["start"]) ?? 1) < 30)
                 from r in sr.QuerySelectorAll(".g")
@@ -82,7 +84,7 @@ namespace WebLinq.Samples
         {
             var q =
 
-                from t in Http.Get(new Uri("https://en.wikipedia.org/wiki/Queen_discography")).Tables().Content()
+                from t in Http.Get(new Uri("https://en.wikipedia.org/wiki/Queen_discography")).Dup().Tables().Content()
                               .Where(t => t.HasClass("wikitable"))
                               .Take(1)
                 from tr in t.TableRows((_, trs) => trs)
@@ -105,7 +107,7 @@ namespace WebLinq.Samples
                 select e
                 into album
 
-                from html in Http.Get(album.Url).Html().Content()
+                from html in Http.Get(album.Url).Dup().Html().Content()
 
                 from tb in html.Tables(".tracklist").Take(2)
                 let trs = tb.QuerySelectorAll("tr")
