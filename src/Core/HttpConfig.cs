@@ -19,21 +19,19 @@
 namespace WebLinq
 {
     using System;
-    using System.Collections.Generic;
     using System.Net;
+    using System.Reactive.Linq;
 
     public sealed class HttpConfig
     {
         public static readonly HttpConfig Default;
 
-        public static IEnumerable<HttpConfig> Set(HttpConfig current,
+        public static IObservable<HttpConfig> Set(HttpConfig current,
             bool? useDefaultCredentials = null,
             bool? useCookies = null,
             string userAgent = null,
-            TimeSpan? timeout = null)
-        {
-            yield return SetCore(current, useDefaultCredentials, useCookies, userAgent, timeout);
-        }
+            TimeSpan? timeout = null) =>
+            Observable.Return(SetCore(current, useDefaultCredentials, useCookies, userAgent, timeout));
 
         static HttpConfig SetCore(HttpConfig initial, bool? useDefaultCredentials, bool? useCookies, string userAgent, TimeSpan? timeout)
         {

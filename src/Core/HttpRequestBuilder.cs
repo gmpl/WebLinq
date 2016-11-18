@@ -17,25 +17,25 @@
 namespace WebLinq
 {
     using System;
-    using System.Collections.Generic;
     using System.Collections.Specialized;
     using System.Linq;
     using System.Net.Http;
+    using System.Reactive.Linq;
     using Mannex.Collections.Generic;
 
     public static class HttpRequestBuilder
     {
-        public static HttpRequestBuilder<HttpFetch<T>> Then<T>(this IEnumerable<HttpFetch<T>> query) =>
+        public static HttpRequestBuilder<HttpFetch<T>> Then<T>(this IObservable<HttpFetch<T>> query) =>
             new HttpRequestBuilder<HttpFetch<T>>(query);
 
-        public static HttpRequestBuilder<HttpConfig> Then(this IEnumerable<HttpConfig> query) =>
+        public static HttpRequestBuilder<HttpConfig> Then(this IObservable<HttpConfig> query) =>
             new HttpRequestBuilder<HttpConfig>(query);
     }
 
     public sealed class HttpRequestBuilder<T>
     {
         HttpConfig _config;
-        readonly IEnumerable<T> _query;
+        readonly IObservable<T> _query;
         HttpOptions _options = new HttpOptions();
         HttpRequestMessage _request = new HttpRequestMessage();
 
@@ -43,9 +43,9 @@ namespace WebLinq
         public HttpRequestMessage Request => _request ?? (_request = new HttpRequestMessage());
 
         public HttpRequestBuilder() :
-            this(new T[1]) { }
+            this(Observable.Return(default(T))) { }
 
-        internal HttpRequestBuilder(IEnumerable<T> query)
+        internal HttpRequestBuilder(IObservable<T> query)
         {
             if (query == null) throw new ArgumentNullException(nameof(query));
             _query = query;
@@ -84,25 +84,25 @@ namespace WebLinq
             return http.Send(request, config ?? _config ?? HttpConfig.Default, options).ToHttpFetch(id);
         }
 
-        public IEnumerable<HttpFetch<HttpContent>> Get(Uri url) => Get(null, url);
+        public IObservable<HttpFetch<HttpContent>> Get(Uri url) => Get(null, url);
 
-        public IEnumerable<HttpFetch<HttpContent>> Get(HttpConfig config, Uri url) =>
+        public IObservable<HttpFetch<HttpContent>> Get(HttpConfig config, Uri url) =>
             from _ in _query
             from http in HttpClient.Default
             select Send(http, config, 0, HttpMethod.Get, url);
 
-        public IEnumerable<HttpFetch<HttpContent>> Post(Uri url, NameValueCollection data) =>
+        public IObservable<HttpFetch<HttpContent>> Post(Uri url, NameValueCollection data) =>
             Post(null, url, data);
 
-        public IEnumerable<HttpFetch<HttpContent>> Post(HttpConfig config, Uri url, NameValueCollection data) =>
+        public IObservable<HttpFetch<HttpContent>> Post(HttpConfig config, Uri url, NameValueCollection data) =>
             Post(config, url, new FormUrlEncodedContent(from i in Enumerable.Range(0, data.Count)
                                                 from v in data.GetValues(i)
                                                 select data.GetKey(i).AsKeyTo(v)));
 
-        public IEnumerable<HttpFetch<HttpContent>> Post(Uri url, HttpContent content) =>
+        public IObservable<HttpFetch<HttpContent>> Post(Uri url, HttpContent content) =>
             Post(null, url, content);
 
-        public IEnumerable<HttpFetch<HttpContent>> Post(HttpConfig config, Uri url, HttpContent content) =>
+        public IObservable<HttpFetch<HttpContent>> Post(HttpConfig config, Uri url, HttpContent content) =>
             from _ in _query
             from http in HttpClient.Default
             select Send(http, config, 0, HttpMethod.Post, url, content);
